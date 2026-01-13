@@ -31,7 +31,7 @@ export default function VolcanoStatus({
       const res = await fetch("/api/phivolcs");
       if (res.ok) {
         const data = await res.json();
-        console.log("data",data);
+        
         if (data) setAlertLevel(data);
       }
     } catch (e) {
