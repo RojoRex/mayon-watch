@@ -13,7 +13,14 @@ export default function VolcanoStatus({
 }: {
   position: { lat: number; lng: number } | null;
 }) {
-  const [alertLevel, setAlertLevel] = useState<string | null>(null);
+  interface VolcanoAlert {
+    alertLevel: number;
+    description: string;
+    updatedAt: string;
+    source: string;
+    cached: boolean;
+  }
+  const [alertLevel, setAlertLevel] = useState<VolcanoAlert | null>(null);
   const [lastChecked, setLastChecked] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
@@ -24,10 +31,16 @@ export default function VolcanoStatus({
       const res = await fetch("/api/phivolcs");
       if (res.ok) {
         const data = await res.json();
-        if (data.alert) setAlertLevel(data.alert);
+        console.log("data",data);
+        if (data) setAlertLevel(data);
       }
     } catch (e) {
       // keep placeholder
+      setAlertLevel({ alertLevel: 1,
+        description: "High Unrest - Magmatic activity",
+        updatedAt: "2026-01-13",
+        source: "error-fallback",
+        cached: false});
     }
   }
 
@@ -44,7 +57,7 @@ export default function VolcanoStatus({
   React.useEffect(() => {
     // Initialize on mount to prevent hydration mismatch
     setMounted(true);
-    setAlertLevel("Alert Level 3 (Very High Hazard)");
+   
     setLastChecked(new Date().toISOString());
     // fetch once on mount
     refresh();
@@ -70,14 +83,14 @@ export default function VolcanoStatus({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 border-t border-slate-700 pt-3">
         <div
           className={`p-2.5 rounded-lg ${
-            alertLevel?.includes("0") || alertLevel?.includes("1")
+            alertLevel && alertLevel?.alertLevel < 1
               ? "bg-green-900/30 border border-green-700"
-              : alertLevel?.includes("2")
+              : alertLevel && alertLevel?.alertLevel > 1 && alertLevel?.alertLevel < 3
               ? "bg-yellow-900/30 border border-yellow-700"
               : "bg-red-900/30 border border-red-700"
           }`}
         >
-          <div className="text-xs font-bold text-white">{alertLevel}</div>
+          <div className="text-xs font-bold text-white">{mounted && alertLevel && `${alertLevel.alertLevel} (${alertLevel.description})`}</div>
           <div className="text-xs text-slate-300 mt-0.5">
             Last:{" "}
             {mounted && lastChecked
